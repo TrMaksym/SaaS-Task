@@ -1,6 +1,12 @@
 from fastapi import FastAPI
 
+from routers import users
+from routers import movies
+
 app = FastAPI()
+
+app.include_router(users.router)
+app.include_router(movies.router)
 
 
 @app.get("/")
