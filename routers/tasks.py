@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.functions import current_user
@@ -22,3 +24,9 @@ def create_task(
         task=task,
         user_id=current_user.id
     )
+@router.get("/", response_model=List[schemas.TaskRead])
+def read_tasks(
+        current_user: models.User = Depends(get_current_user),
+        db: Session = Depends(get_db)
+):
+    return crud.get_tasks(db, current_user.id)
