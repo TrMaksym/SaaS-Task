@@ -1,7 +1,14 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from sqlalchemy.sql.functions import current_user
 
-router = APIRouter()
+import crud, schemas
+from database import get_db
 
-@router.get("/movies/")
-async def read_movies():
-    return {"message": "List of movies"}
+router = APIRouter(
+    prefix="/users",
+)
+
+@router.post("/", response_model=schemas.TaskRead)
+def create_task(task: schemas.TaskCreate,user_id: int, db: Session = Depends(get_db)):
+    return crud.create_task(task=task, db=db, user_id=current_user.id)

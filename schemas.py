@@ -15,7 +15,7 @@ class UserRead(UserBase):
 
 class TaskBase(BaseModel):
     title: str
-    description: [Optional[str]] = None
+    description: Optional[str]
 
 class TaskCreate(TaskBase):
     pass
