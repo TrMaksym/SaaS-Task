@@ -39,3 +39,21 @@ def create_task(db: Session, task: schemas.TaskCreate, user_id: int):
     db.commit()
     db.refresh(db_task)
     return db_task
+
+def update_task(db: Session, task_id: int, task_update: schemas.TaskUpdate, user_id: int):
+    task = db.query(models.Task).filter(
+        models.Task.id == task_id,
+        models.Task.owner_id == user_id
+    ).first()
+    if not task:
+        return None
+    if task_update.title is not None:
+        task.title = task_update.title
+    if task_update.description is not None:
+        task.description = task_update.description
+    if task_update.status is not None:
+        task.status = task_update.status
+    task.updated_at = utcnow()
+    db.commit()
+    db.refresh(task)
+    return task
