@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from minio.time import utcnow
 from sqlalchemy.orm import Session
 import models, schemas
 from passlib.context import CryptContext
@@ -23,11 +24,17 @@ def create_user(db: Session, user: schemas.UserCreate):
     db.refresh(db_user)
     return db_user
 
-def get_tasks(db: Session, skip: int = 0, limit: int = 10):
-    return db.query(models.Task).offset(skip).limit(limit).all()
+def get_tasks(db: Session, user_id: int, skip: int = 0, limit: int = 10):
+    return db.query(models.Task).filter(models.Task.owner_id == user_id).offset(skip).limit(limit).all()
 
 def create_task(db: Session, task: schemas.TaskCreate, user_id: int):
-    db_task = models.Task(title=task.title, description=task.description, updated_at=datetime.utcnow())
+    db_task = (models.Task(
+        title=task.title,
+        description=task.description,
+        owner_id=user_id,
+        created_at=datetime.utcnow(),
+        updated_at=utcnow(),
+    ))
     db.add(db_task)
     db.commit()
     db.refresh(db_task)
