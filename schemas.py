@@ -3,7 +3,6 @@ from datetime import datetime
 from typing import Optional
 from models import TaskStatus
 
-# ----------------- User -----------------
 class UserBase(BaseModel):
     email: str
 
@@ -15,9 +14,8 @@ class UserRead(UserBase):
     is_active: bool
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
-# ----------------- Task -----------------
 class TaskBase(BaseModel):
     title: str
     description: Optional[str] = None
@@ -38,4 +36,4 @@ class TaskRead(TaskBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True

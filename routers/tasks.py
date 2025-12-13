@@ -4,7 +4,7 @@ from typing import List, Optional
 
 import crud, schemas, models
 from database import get_db
-from dependencies.auth import get_current_user
+from dependencies import get_current_user
 
 router = APIRouter(
     prefix="/tasks",
@@ -37,7 +37,11 @@ def update_task(task_id: int,
     return task
 
 @router.delete("/{task_id}", response_model=schemas.TaskRead)
-def delete_task(task_id: int, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_current_user)):
+def delete_task(
+    task_id: int,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     task = crud.delete_task(db=db, task_id=task_id, user_id=current_user.id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
