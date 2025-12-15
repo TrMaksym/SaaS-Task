@@ -34,3 +34,7 @@ def get_current_user(
         raise credentials_exception
 
     return user
+
+
+def get_team_member(db: Session, team_id: int, user_id: int):
+    return db.query(models.TeamMember).filter(models.TeamMember.team_id == team_id, models.TeamMember.user_id == user_id).first()
