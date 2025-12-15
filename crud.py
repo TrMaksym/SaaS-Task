@@ -1,9 +1,15 @@
-from datetime import datetime
+import token
+import uuid
+from datetime import datetime, timedelta
 
 from minio.time import utcnow
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.functions import current_user
+
 import models, schemas
 from passlib.context import CryptContext
+
+from dependencies import get_team_member
 
 pwd_context = CryptContext(
     schemes=["bcrypt"],
@@ -65,3 +71,66 @@ def delete_task(db: Session, task_id: int, user_id: int):
     db.delete(task)
     db.commit()
     return task
+
+
+def create_team(db: Session, team: schemas.TeamCreate, owner_id: int):
+    db_team = models.Team(name=team.name, owner_id=owner_id)
+    db.add(db_team)
+    db.commit()
+    db.refresh(db_team)
+
+    owner_member = models.TeamMember(user_id=owner_id, team_id=team.id, role=models.TeamRole.OWNER)
+    db.add(owner_member)
+    db.commit()
+    return db_team
+
+
+def project_create(db: Session, project: schemas.ProjectCreate, team_id: int):
+    member = get_team_member(db, project.team_id, current_user.id)
+    if not member:
+        return None
+
+    db_project = models.Project(
+        name=project.name,
+        team_id=project.team_id
+    )
+    db.add(db_project)
+    db.commit()
+    db.refresh(db_project)
+    return db_project
+
+def create_team_invite(db: Session, team_id: int, email: str, current_user_id: int):
+    member = get_team_member(db, team_id, current_user_id)
+    if not member:
+        return None
+
+    token = str(uuid.uuid4())
+
+    invite = models.TeamInvite(team_id=team_id, email=email, token=token, expires_at=datetime.utcnow() + timedelta(days=3))
+
+    db.add(invite)
+    db.commit()
+    db.refresh(invite)
+    return invite
+
+def accept_invite(db: Session, invite_id: int, current_user_id: int):
+    invite = db.query(models.TeamInvite).filter(
+        models.TeamInvite.token == token,
+        models.TeamInvite.expires_at > datetime.utcnow()
+    ).first()
+
+    if not invite:
+        return None
+
+    member = models.TeamMember(
+        user_id=current_user_id,
+        team_id=invite.team_id,
+        role=models.TeamRole.MEMBER
+    )
+    db.add(member)
+
+    db.delete(invite)
+    db.commit()
+    return (
+        member
+    )
