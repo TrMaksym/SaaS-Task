@@ -134,3 +134,8 @@ def accept_invite(db: Session, invite_id: int, current_user_id: int):
     return (
         member
     )
+
+def log_activity(db: Session, team_id: int, user_id: int, action: str, entity_type: str, entity_id: int):
+    activity = models.Activity(team_id=team_id, user_id=user_id, action=action, entity_type=entity_type, entity_id=entity_id)
+    db.add(activity)
+    db.commit()
