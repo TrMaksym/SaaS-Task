@@ -30,6 +30,19 @@ class TeamInvite(Base):
     team = relationship("Team")
 
 
+class Activity(Base):
+    __tablename__ = "activities"
+
+    id = Column(Integer, primary_key=True)
+    team_id = Column(Integer, ForeignKey("teams.id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
+    action = Column(String)
+    entity_type = Column(String)
+    entity_id = Column(Integer)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class Team(Base):
     __tablename__ = "teams"
 
