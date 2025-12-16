@@ -46,6 +46,10 @@ class TeamMemberRead(BaseModel):
         from_attributes = True
 
 
+class TeamUpdate(BaseModel):
+    name: Optional[str] = None
+
+
 class ProjectBase(BaseModel):
     name: str
 
