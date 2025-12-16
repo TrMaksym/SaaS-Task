@@ -84,6 +84,29 @@ def create_team(db: Session, team: schemas.TeamCreate, owner_id: int):
     db.commit()
     return db_team
 
+def update_team(
+    db: Session,
+    team_id: int,
+    team_update: schemas.TeamUpdate,
+    current_user_id: int
+):
+    member = get_team_member(db, team_id, current_user_id)
+    if not member or member.role != models.TeamRole.OWNER:
+        return None
+
+    team = db.query(models.Team).filter(models.Team.id == team_id).first()
+
+    if not team:
+        return None
+
+    if team_update.name is not None:
+        team.name = team_update.name
+
+    team.updated_at = utcnow()
+    db.commit()
+    db.refresh(team)
+    return team
+
 
 def project_create(db: Session, project: schemas.ProjectCreate, team_id: int):
     member = get_team_member(db, project.team_id, current_user.id)
