@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from routers import users, auth
+from routers import users, auth, team, project
 from routers import tasks
 
 app = FastAPI()
@@ -8,6 +8,8 @@ app = FastAPI()
 app.include_router(users.router)
 app.include_router(tasks.router)
 app.include_router(auth.router)
+app.include_router(team.router)
+app.include_router(project.router)
 
 
 @app.get("/")
