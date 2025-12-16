@@ -1,26 +1,11 @@
-FROM python:3.11.9-slim
-
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    libpq-dev \
-    curl \
-    postgresql-client \
-    netcat-openbsd \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN pip install --upgrade pip
-RUN pip install poetry==2.1.3
+FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY pyproject.toml poetry.lock* /app/
-RUN poetry cache clear --all pypi && \
-    poetry config virtualenvs.create false && \
-    poetry install --no-interaction --no-ansi --no-root
+COPY requirements.txt .
 
-COPY . /app
+RUN pip install --no-cache-dir -r requirements.txt
 
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONUNBUFFERED=/app
+COPY . .
 
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
