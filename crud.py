@@ -9,7 +9,7 @@ from sqlalchemy.sql.functions import current_user
 import models, schemas
 from passlib.context import CryptContext
 
-from dependencies import get_team_member
+from dependencies.permissions import get_team_member
 
 pwd_context = CryptContext(
     schemes=["bcrypt"],

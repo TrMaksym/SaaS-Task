@@ -1,25 +1,21 @@
-from http.client import HTTPException
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
-from fastapi import Depends, APIRouter
-from requests import Session
-from sqlalchemy.sql import crud
-
-import schemas
+import schemas, crud
 from database import get_db
-from dependencies import get_current_user
-from models import User
+from dependencies.permissions import require_team_member
 
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/projects",
+    tags=["projects"],
+)
 
-def require_team_member_from_body():
-    def dependency(
-        project: schemas.ProjectCreate,
-        db: Session = Depends(get_db),
-        user: User = Depends(get_current_user),
-    ):
-        member = crud.get_team_member(db, project.team_id, user.id)
-        if not member:
-            raise HTTPException(403)
-        return member
-    return dependency
+
+@router.post("/")
+def create_project(
+    project: schemas.ProjectCreate,
+    member=Depends(require_team_member()),
+    db: Session = Depends(get_db),
+):
+    return crud.create_project(db, project)

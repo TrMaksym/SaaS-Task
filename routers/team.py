@@ -6,12 +6,13 @@ from requests import Session
 import crud
 import schemas
 from database import get_db
-from dependencies import get_current_user
+from dependencies.auths import get_current_user
 from models import User
-from routers.auth import router
-from schemas import TeamCreate
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/team",
+    tags=["team"],
+)
 
 @router.post("/team")
 def create_team(

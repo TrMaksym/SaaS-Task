@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from routers import users, auth, team, project
+from routers import users, team, project, auth
 from routers import tasks
 
 app = FastAPI()
