@@ -1,3 +1,5 @@
+import datetime
+import secrets
 from http.client import HTTPException
 
 from fastapi import Depends, APIRouter
@@ -7,7 +9,7 @@ import crud
 import schemas
 from database import get_db
 from dependencies.auths import get_current_user
-from models import User
+from models import User, TeamRole, TeamInvite
 
 router = APIRouter(
     prefix="/team",
@@ -33,4 +35,18 @@ def update_team(
     if not updated:
         raise HTTPException(status_code=403, detail="Access denied")
     return updated
+
+def create_team_invite(db: Session, team_id: int, email: str, role: TeamRole):
+    token = secrets.token_urlsafe(16)
+    invite = TeamInvite(
+        email=email,
+        team_id=team_id,
+        role=role,
+        token=token,
+        expires_at=datetime.utcnow() + datetime.timedelta(days=3)
+    )
+    db.add(invite)
+    db.commit()
+    db.refresh(invite)
+    return invite
 
