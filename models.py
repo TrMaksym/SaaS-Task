@@ -1,21 +1,38 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, Enum
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, Enum, Table, Text
 from sqlalchemy.orm import relationship
 from database import Base
 
+
+task_assignees = Table(
+    "task_assignees",
+    Base.metadata,
+    Column("task_id", Integer, ForeignKey("tasks.id"), primary_key=True),
+    Column("user_id", Integer, ForeignKey("users.id"), primary_key=True)
+)
 
 class TaskStatus(str, enum.Enum):
     TODO = "TODO"
     IN_PROGRESS = "IN_PROGRESS"
     DONE = "DONE"
 
-
 class TeamRole(str, enum.Enum):
     ADMIN = "ADMIN"
     MEMBER = "MEMBER"
 
+class TaskComment(Base):
+    __tablename__ = "task_comments"
+
+    id = Column(Integer, primary_key=True)
+    task_id = Column(Integer, ForeignKey("tasks.id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    task = relationship("Task", back_populates="comments")
+    user = relationship("User", back_populates="comments")
 
 class TeamInvite(Base):
     __tablename__ = "team_invites"
@@ -27,8 +44,7 @@ class TeamInvite(Base):
     token = Column(String, unique=True, index=True)
     expires_at = Column(DateTime)
 
-    team = relationship("Team")
-
+    team = relationship("Team", back_populates="invites")
 
 class Activity(Base):
     __tablename__ = "activities"
@@ -39,9 +55,7 @@ class Activity(Base):
     action = Column(String)
     entity_type = Column(String)
     entity_id = Column(Integer)
-
     created_at = Column(DateTime, default=datetime.utcnow)
-
 
 class Team(Base):
     __tablename__ = "teams"
@@ -50,9 +64,9 @@ class Team(Base):
     name = Column(String, unique=True, index=True)
     owner_id = Column(Integer, ForeignKey("users.id"))
 
-    members = relationship("TeamMember", back_populates="team.py")
-    project = relationship("Project", back_populates="team.py")
-
+    members = relationship("TeamMember", back_populates="team")
+    projects = relationship("Project", back_populates="team")
+    invites = relationship("TeamInvite", back_populates="team")
 
 class TeamMember(Base):
     __tablename__ = "team_members"
@@ -75,7 +89,6 @@ class Project(Base):
     team = relationship("Team", back_populates="projects")
     tasks = relationship("Task", back_populates="project")
 
-
 class User(Base):
     __tablename__ = "users"
 
@@ -85,7 +98,13 @@ class User(Base):
     is_active = Column(Boolean, default=True)
 
     tasks = relationship("Task", back_populates="owner")
-
+    assigned_tasks = relationship(
+        "Task",
+        secondary=task_assignees,
+        back_populates="task_assignees"
+    )
+    comments = relationship("TaskComment", back_populates="user")
+    teams = relationship("TeamMember", back_populates="user")
 
 class Task(Base):
     __tablename__ = "tasks"
@@ -94,9 +113,17 @@ class Task(Base):
     title = Column(String)
     description = Column(String)
     owner_id = Column(Integer, ForeignKey("users.id"))
+    project_id = Column(Integer, ForeignKey("projects.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
     is_done = Column(Boolean, default=False)
     status = Column(Enum(TaskStatus), default=TaskStatus.TODO)
 
     owner = relationship("User", back_populates="tasks")
+    task_assignees = relationship(
+        "User",
+        secondary=task_assignees,
+        back_populates="assigned_tasks"
+    )
+    comments = relationship("TaskComment", back_populates="task")
+    project = relationship("Project", back_populates="tasks")
