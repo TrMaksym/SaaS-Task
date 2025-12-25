@@ -43,8 +43,10 @@ class TeamInvite(Base):
     role = Column(Enum(TeamRole), default=TeamRole.MEMBER)
     token = Column(String, unique=True, index=True)
     expires_at = Column(DateTime)
+    invited_by = Column(Integer, ForeignKey("users.id"))
 
     team = relationship("Team", back_populates="invites")
+
 
 class Activity(Base):
     __tablename__ = "activities"
