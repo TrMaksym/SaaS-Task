@@ -1,11 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import Optional
 
 import crud, schemas, models
 from database import get_db
 from dependencies.auths import get_current_user
-from models import TaskComment
 
 router = APIRouter(
     prefix="/tasks",
@@ -113,23 +112,3 @@ def delete_task(
         entity_id=task.id
     )
     return deleted_task
-
-def assign_user_to_task(db: Session, task_id: int, user_id: int):
-    task = db.query(models.Task).get(task_id)
-    user = db.query(models.User).get(user_id)
-    if not task or not user:
-        return False
-    task.assignees.append(user)
-    db.commit()
-    db.refresh(task)
-    return task
-
-def add_comment(db: Session, task_id, user_id, content: str):
-    comment = TaskComment(task_id=task_id, user_id=user_id, content=content)
-    db.add(comment)
-    db.commit()
-    db.refresh(comment)
-    return comment
-
-def get_task_comments(db: Session, task_id: int):
-    return db.query(TaskComment).filter(TaskComment.task_id == task_id).all()
