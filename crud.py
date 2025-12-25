@@ -1,3 +1,4 @@
+import secrets
 import token
 import uuid
 from datetime import datetime, timedelta
@@ -122,20 +123,6 @@ def project_create(db: Session, project: schemas.ProjectCreate, team_id: int):
     db.refresh(db_project)
     return db_project
 
-def create_team_invite(db: Session, team_id: int, email: str, current_user_id: int):
-    member = get_team_member(db, team_id, current_user_id)
-    if not member:
-        return None
-
-    token = str(uuid.uuid4())
-
-    invite = models.TeamInvite(team_id=team_id, email=email, token=token, expires_at=datetime.utcnow() + timedelta(days=3))
-
-    db.add(invite)
-    db.commit()
-    db.refresh(invite)
-    return invite
-
 def accept_invite(db: Session, invite_id: int, current_user_id: int):
     invite = db.query(models.TeamInvite).filter(
         models.TeamInvite.token == token,
@@ -162,3 +149,38 @@ def log_activity(db: Session, team_id: int, user_id: int, action: str, entity_ty
     activity = models.Activity(team_id=team_id, user_id=user_id, action=action, entity_type=entity_type, entity_id=entity_id)
     db.add(activity)
     db.commit()
+
+def create_team_invite(db: Session, invited_by: int, team_id: int, email: str, role: models.TeamRole):
+    token_str = secrets.token_urlsafe(16)
+    invite = models.TeamInvite(
+        email=email,
+        team_id=team_id,
+        role=role,
+        token=token_str,
+        invited_by=invited_by,
+        expires_at=datetime.utcnow() + timedelta(days=3)
+    )
+    db.add(invite)
+    db.commit()
+    db.refresh(invite)
+    return invite
+
+def assign_user_to_task(db: Session, task_id: int, user_id: int):
+    task = db.query(models.Task).get(task_id)
+    user = db.query(models.User).get(user_id)
+    if not task or not user:
+        return None
+    task.assignees.append(user)
+    db.commit()
+    db.refresh(task)
+    return task
+
+def add_comment(db: Session, task_id, user_id, content: str):
+    comment = models.TaskComment(task_id=task_id, user_id=user_id, content=content)
+    db.add(comment)
+    db.commit()
+    db.refresh(comment)
+    return comment
+
+def get_task_comments(db: Session, task_id: int):
+    return db.query(models.TaskComment).filter(models.TaskComment.task_id == task_id).all()
