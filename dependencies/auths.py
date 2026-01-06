@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 import crud
 from database import get_db
 from core.security import SECRET_KEY, ALGORITHM
+from schemas import UserRead
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -33,3 +34,8 @@ def get_current_user(
         raise credentials_exception
 
     return user
+
+def require_admin(current_user: UserRead = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Access forbidden: admins only")
+    return current_user
