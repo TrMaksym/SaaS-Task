@@ -1,3 +1,4 @@
+import hashlib
 import secrets
 import token
 import uuid
@@ -10,6 +11,7 @@ from sqlalchemy.sql.functions import current_user
 import models, schemas
 from passlib.context import CryptContext
 
+from core.security import _prehash_password, get_password_hash
 from dependencies.permissions import get_team_member
 
 pwd_context = CryptContext(
@@ -24,7 +26,7 @@ def get_user_email(db: Session, email: str):
     return db.query(models.User).filter(models.User.email == email).first()
 
 def create_user(db: Session, user: schemas.UserCreate):
-    hashed_password = pwd_context.hash(user.password)
+    hashed_password = get_password_hash(user.password)
     db_user = models.User(email=user.email, hashed_password=hashed_password)
     db.add(db_user)
     db.commit()
