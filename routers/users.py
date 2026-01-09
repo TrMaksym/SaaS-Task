@@ -3,12 +3,14 @@ from sqlalchemy.orm import Session
 import crud, schemas
 import models
 from database import get_db
+from dependencies.auths import require_admin
 
 router = APIRouter(
     prefix="/users",
 )
 
-def create_user(db: Session, user: schemas.UserCreate):
+@router.post("/create", response_model=schemas.UserRead)
+def create_user(user: schemas.UserCreate, db: Session = Depends(get_db), admin = Depends(require_admin)):
     try:
         hashed_password = crud.pwd_context.hash(user.password)
         db_user = models.User(email=user.email, hashed_password=hashed_password)
