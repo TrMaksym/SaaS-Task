@@ -98,6 +98,7 @@ class User(Base):
     email = Column(String, unique=True, nullable=False, index=True)
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
+    is_admin = Column(Boolean, default=False)
     role = Column(Enum(TeamRole), default=TeamRole.MEMBER)
 
     tasks = relationship("Task", back_populates="owner")
