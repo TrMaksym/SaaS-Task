@@ -19,3 +19,15 @@ def create_user_admin(
         db: Session = Depends(get_db)
 ):
     return crud.create_user(db, user)
+
+def create_admin(db: Session, user: schemas.UserCreate):
+    hashed_password = crud.pwd_context.hash(user.password)
+    db_user = User(
+        email=user.email,
+        hashed_password=hashed_password,
+        is_admin=True
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
