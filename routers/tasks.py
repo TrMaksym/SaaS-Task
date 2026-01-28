@@ -52,6 +52,39 @@ def create_task(task: schemas.TaskCreate,
         entity_id=task.id
     )
     return task
+
+
+@router.get("/{task_id}/comments", response_model=list[schemas.CommentRead])
+def list_task_comments(
+    task: models.Task = Depends(require_task_access),
+    db: Session = Depends(get_db),
+):
+    return crud.get_task_comments(db=db, task_id=task.id)
+
+
+@router.post("/{task_id}/comments", response_model=schemas.CommentRead)
+def create_task_comment(
+    comment: schemas.CommentCreate,
+    task: models.Task = Depends(require_task_access),
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    created = crud.add_comment(
+        db=db,
+        task_id=task.id,
+        user_id=current_user.id,
+        content=comment.content,
+    )
+
+    crud.log_activity(
+        db=db,
+        user_id=current_user.id,
+        team_id=task.project.team_id,
+        action="commented",
+        entity_type="task",
+        entity_id=task.id,
+    )
+    return created
 def read_tasks(
     project_id: Optional[int] = None,
     status: Optional[models.TaskStatus] = None,
